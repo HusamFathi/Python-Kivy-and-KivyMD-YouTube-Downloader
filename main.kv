@@ -1,0 +1,148 @@
+#: import Clipboard kivy.core.clipboard.Clipboard
+#: import threading threading
+#: import platform kivy.platform
+#: import Window kivy.core.window.Window
+YoutubeDownloader:
+    MDBoxLayout:
+        orientation:'vertical'
+        spacing:"15dp"
+        MDBoxLayout:
+            size_hint_y:None
+            height:'70dp'
+            spacing:'20dp'
+            md_bg_color:app.theme_cls.primary_color
+            id:appbar
+            OneLineListItem:
+                text:'Your Link Will Appears Here'
+                ripple_alpha:0
+                id:link_holder
+        ScrollView:
+            bar_color:app.theme_cls.primary_color
+            bar_width:dp(15) if platform=='win' else dp(0)
+            effect_cls:'ScrollEffect'
+            scroll_type:['bars'] if platform=='win' else ['content']
+            MDBoxLayout:
+                padding:['20dp',0,'20dp','100dp']
+                spacing:'20dp'
+                adaptive_height:True
+                orientation:'vertical'
+                id:scroll_box
+
+
+<YoutubeDownloader>:
+<TooltipIconButton@MDIconButton+MDTooltip>:
+<TopBarIconBox>:
+    adaptive_size:True
+    padding:'10dp'
+    spacing:'10dp'
+    TooltipIconButton:
+        icon:'assets/images/youtube.png'
+        tooltip_text:'Paste Video Link'
+        user_font_size:'20sp'
+        on_release:
+            app.root.ids.link_holder.text=Clipboard.paste()
+            app.root.go()
+    TooltipIconButton:
+        icon:'assets/images/trending.png'
+        tooltip_text:'Download All Videos'
+        user_font_size:'20sp'
+        on_release:
+            threading.Thread(target=app.root.download_all).start()
+<DownloadCard>:
+    radius:25
+    size_hint_y:None
+    height:"255dp" if Window.width>dp(530) else '480dp'
+    link:""
+    padding:'15dp'
+    operation:"Video and Audio"
+    orientation:'vertical'
+    MDBoxLayout:
+        orientation:"horizontal" if Window.width>dp(530) else 'vertical'
+        spacing: '10dp' if Window.width>dp(530) else '30dp'
+        AsyncImage:
+            source:root.thumbnail
+            size_hint_x:.35 if Window.width>dp(530) else 1
+        MDBoxLayout:
+            orientation:'vertical'
+            spacing:'15dp'
+            MDBoxLayout:
+                OneLineListItem:
+                    text:root.title
+                    ripple_alpha:0
+                MDIconButton:
+                    icon:'close'
+                    theme_text_color:'Custom'
+                    text_color:1,0,0,1
+                    on_release:root.remove_from_list()
+            MDLabel:
+                text:'Quality: '+root.resolution
+                adaptive_height:True
+                pos_hint:{"center_x":.5,'center_y':.5}
+            MDLabel:
+                text:'Length: '+root.length
+                adaptive_height:True
+                pos_hint:{"center_x":.5,'center_y':.5}
+            MDLabel:
+                text:'Size: '+root.file_size
+                adaptive_height:True
+                pos_hint:{"center_x":.5,'center_y':.5}
+            MDBoxLayout:
+                orientation:"horizontal" if Window.width>dp(530) else 'vertical'
+                adaptive_height:True
+                spacing:"15dp"
+                MDBoxLayout:
+                    MDLabel:
+                        text:'Download Only Audio'
+                        text_size:None,None
+                        adaptive_size:True
+                        pos_hint:{"center_x":.5,'center_y':.5}
+                    MDCheckbox:
+                        size_hint:None,None
+                        pos_hint:{"center_x":.5,'center_y':.5}
+                        size:dp(35),dp(35)
+                        selected_color:app.theme_cls.accent_color
+                        unselected_color:app.theme_cls.accent_color
+                        on_active:root.operation='Audio' if root.operation=="Video and Audio" else "Video and Audio"
+                MDBoxLayout:
+                    pos_hint:{"center_x":.5,'center_y':.5}
+                    spacing:"5dp"
+                    size_hint_y:None
+                    height:'50dp'
+                    MDLabel:
+                        text:'Downloading ...' if (root.downloading and download_button.icon=='download') else ''
+                        adaptive_height:True
+                        pos_hint:{"center_x":.5,'center_y':.5}
+                    MDIconButton:
+                        icon:root.download_icon
+                        adaptive_height:True
+                        theme_text_color:'Custom'
+                        id:download_button
+                        disabled:root.isNoTDownloadable
+                        text_color:app.theme_cls.accent_color
+                        on_release:threading.Thread(target=root.download_video,args=(root.yt,root.operation,)).start()
+
+    MDBoxLayout:
+        size_hint_y:None
+        height:'30dp'
+        MDProgressBar:
+            min:0
+            max:100
+            id:progress_bar
+            running_duration:1
+            color:app.theme_cls.accent_color
+<MobileFloatButton>:
+    tooltip_text:'Paste Video Link'
+    icon:'content-paste'
+    pos_hint:{"right":1-dp(30)/Window.width,'y':dp(55)/Window.height}
+    on_release:
+        app.root.ids.link_holder.text=Clipboard.paste()
+        app.root.go()
+<TooltipMobileBottomButton@MDRaisedButton+MDTooltip>:
+
+<MobileBottomButton>:
+    TooltipMobileBottomButton:
+        tooltip_text:'Download All Videos'
+        text:'Download All Videos'
+        size_hint_x:1
+        on_release:
+            threading.Thread(target=app.root.download_all).start()
